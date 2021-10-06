@@ -8,7 +8,7 @@ export const demoRouter = [
     path: 'welcome',
     name: 'welcome',
     meta: {
-      title: '欢迎页',
+      title: 'Welcome',
       icon: require('@/assets/icon/home.png')
     },
     component: () => import('@/views/example/welcome')
@@ -17,7 +17,7 @@ export const demoRouter = [
     path: 'cascadeDelete',
     name: 'cascadeDelete',
     meta: {
-      title: '联级删除',
+      title: 'Cascade Delete',
       icon: require('@/assets/icon/delete.png')
     },
     component: () => import('@/views/example/cascadeDelete')
@@ -26,7 +26,7 @@ export const demoRouter = [
     path: 'toolbar',
     name: 'toolbar',
     meta: {
-      title: '工具箱',
+      title: 'Toolbar',
       icon: require('@/assets/icon/toolbar.png')
     },
     component: () => import('@/views/example/toolbar')
@@ -35,7 +35,7 @@ export const demoRouter = [
     path: 'customToolbar',
     name: 'customToolbar',
     meta: {
-      title: '自定义工具箱',
+      title: 'Custom Toolbar',
       icon: require('@/assets/icon/toolbar2.png')
     },
     component: () => import('@/views/example/customToolbar')
@@ -44,7 +44,7 @@ export const demoRouter = [
     path: 'stencilToolbar',
     name: 'stencilToolbar',
     meta: {
-      title: '模板工具箱',
+      title: 'Stencil Toolbar',
       icon: require('@/assets/icon/stencil.png')
     },
     component: () => import('@/views/example/stencilToolbar')
@@ -53,7 +53,7 @@ export const demoRouter = [
     path: 'htmlLabel',
     name: 'htmlLabel',
     meta: {
-      title: 'HTML标签',
+      title: 'HTML Label',
       icon: require('@/assets/icon/label.png')
     },
     component: () => import('@/views/example/htmlLabel')
@@ -62,7 +62,7 @@ export const demoRouter = [
     path: 'edgeStyle',
     name: 'edgeStyle',
     meta: {
-      title: '连线样式',
+      title: 'Edge Style',
       icon: require('@/assets/icon/line.png')
     },
     component: () => import('@/views/example/edgeStyle')
@@ -71,7 +71,7 @@ export const demoRouter = [
     path: 'customConnectionConstraints',
     name: 'customConnectionConstraints',
     meta: {
-      title: '自定义连接点',
+      title: 'Custom Connection Constraints',
       icon: require('@/assets/icon/connectPoint.png')
     },
     component: () => import('@/views/example/customConnectionConstraints')
@@ -80,7 +80,7 @@ export const demoRouter = [
     path: 'manualDrawing',
     name: 'manualDrawing',
     meta: {
-      title: '手动绘图',
+      title: 'Manual Drawing',
       icon: require('@/assets/icon/handler.png')
     },
     component: () => import('@/views/example/manualDrawing')
@@ -89,7 +89,7 @@ export const demoRouter = [
     path: 'graphEditor',
     name: 'graphEditor',
     meta: {
-      title: '简易编辑器',
+      title: 'Graph Editor',
       icon: require('@/assets/icon/editor.png')
     },
     component: () => import('@/views/example/graphEditor')
@@ -98,10 +98,19 @@ export const demoRouter = [
     path: 'groupEditor',
     name: 'groupEditor',
     meta: {
-      title: '组编辑',
+      title: 'Group Editor',
       icon: require('@/assets/icon/group.png')
     },
     component: () => import('@/views/example/groupEditor')
+  },
+  {
+    path: 'fmWeb',
+    name: 'fmWeb',
+    meta: {
+      title: 'FMWeb',
+      icon: require('@/assets/icon/group.png')
+    },
+    component: () => import('@/views/example/fmWeb')
   }
 ]
 

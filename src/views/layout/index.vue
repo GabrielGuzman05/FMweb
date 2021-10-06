@@ -18,13 +18,13 @@
 
 <script>
 import sidebar from '@/views/layout/sidebar'
-import navbar from '@/views/layout/navbar'
+//import navbar from '@/views/layout/navbar'
 
 export default {
   name: 'layout',
   components: {
     sidebar,
-    navbar
+    //navbar
   }
 }
 </script>
