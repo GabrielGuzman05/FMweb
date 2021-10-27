@@ -5,15 +5,25 @@ import {
 */
 //const outputIcon = './icon/output.png'
 //const inputIcon = './icon/input.png'
+//Imports the icons from the assets icon folder
 const featureIcon = './icon/feature.png'
 const relationIcon = './icon/link.png'
 
+/**
+ * Array of toolbar elemnts, follow the structure:
+ *  {
+ *  icon:
+ *  title:
+ *  width:
+ *  height:
+ *  style:  {}
+ *  }
+ */
 export const toolbarItems = [
   {
     icon: featureIcon,
     title: 'Feature',
-    name: 'New Feature',
-    width: 100,
+    width: 150,
     height: 50,
     style: {
       fillColor: 'transparent',
@@ -47,9 +57,19 @@ export const toolbarItems = [
   }*/
 ]
 
+/**
+ * Array with the types of realtionships follows the structure:
+ * {
+ *  title: ...,
+ *  relationship: ...,
+ *  icon: ...,
+ *  style:  {}
+ *  }
+ */
 export const relationshipTypes = [
   {
     title: 'Optional',
+    relationship: 'Parenthood',
     icon: relationIcon,
     style: {
       startArrow: 0,
@@ -59,22 +79,44 @@ export const relationshipTypes = [
   },
   {
     title: 'Mandatory',
+    relationship: 'Parenthood',
     icon: relationIcon,
+    style: {
+      startArrow: 0,
+      endArrow: 'oval',
+      endFill: 1
+    }
   },
   {
     title: 'Alternative',
+    relationship: 'LogicAssociation',
     icon: relationIcon,
+    style: {
+      startArrow: 'block', endArrow: 'block', startFill: 0, endFill: 0
+    }
   },
   {
     title: 'Or',
+    relationship: 'LogicAssociation',
     icon: relationIcon,
+    style: {
+      startArrow: 'block', endArrow: 'block', startFill: 1, endFill: 1
+    }
   },
   {
     title: 'Requires',
+    relationship: 'Dependency',
     icon: relationIcon,
+    style: {
+      dashed: 1, startArrow: 0, endArrow: 'block', endFill: 1
+    }
   },
   {
     title: 'Excludes',
+    relationship: 'Dependency',
     icon: relationIcon,
+    style: {
+      dashed: 1, startArrow: 'block', endArrow: 'block', startFill: 1, endFill: 1
+    }
   },
 ]

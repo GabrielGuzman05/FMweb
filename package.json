@@ -16,12 +16,13 @@
     "Base64": "^1.1.0",
     "core-js": "^2.6.5",
     "element-ui": "^2.8.2",
-    "mxgraph": "^4.0.6",
+    "mxgraph": "^4.2.2",
     "ramda": "^0.26.1",
     "rxjs": "^6.5.3",
     "vue": "^2.6.6",
     "vue-router": "^3.0.1",
-    "vuex": "^3.0.1"
+    "vuex": "^3.0.1",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.4.0",
