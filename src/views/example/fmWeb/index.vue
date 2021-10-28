@@ -530,22 +530,25 @@ export default {
         let cells = [];
         while (elt != null) {
           let cell = codec.decode(elt);
-          console.log(cell);
           if (
             cell != undefined &&
             (cell.nodeName == "feature" || cell.nodeName == "relationship")
           ) {
+            //Just add to the graph if it is a feature in case of realtionships, push them to an array
+            //so you can add them later
             if (cell.nodeName == "feature") {
               this.addFeature(cell);
+            } else {
+              cells.push(cell);
             }
-            if (cell.nodeName == "relationship") {
-              this.addRelation(cell);
-            }
-            cells.push(cell);
           }
           elt = elt.nextSibling;
         }
-        console.log(cells);      };
+        //Add all the relationships that weren't added previously
+        cells.array.forEach((cell) => {
+          this.addRelation(cell);
+        });
+      };
       reader.readAsText(file);
     },
     /**
