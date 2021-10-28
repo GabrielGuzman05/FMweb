@@ -60,30 +60,24 @@
   </div>
 </template>
 <script>
-//Imports the sidebar toolbar items
-import { toolbarItems } from "./toolbar";
-
-//Imports the sidebar relationship types
-import { relationshipTypes } from "./toolbar";
-
-//import a modal from the components
-import Modal from "./../../../components/Modal.vue";
-
 //Imports the classes in the mxClient
 import {
-  mxEvent as MxEvent,
-  mxGraph as MxGraph,
-  mxUtils as MxUtils,
-  mxCodec as MxCodec,
-  mxPoint as MxPoint,
-  mxConnectionConstraint as MxConnectionConstraint,
-  mxShape as MxShape,
-  mxConnectionHandler as MxConnectionHandler,
-  mxImage as MxImage,
   mxCell as MxCell,
+  mxCodec as MxCodec,
+  mxConnectionConstraint as MxConnectionConstraint,
+  mxConnectionHandler as MxConnectionHandler,
+  mxEvent as MxEvent,
   mxGeometry as MxGeometry,
-  //mxGraphModel as mxGraphModel,
+  mxGraph as MxGraph,
+  mxImage as MxImage,
+  mxPoint as MxPoint,
+  mxShape as MxShape,
+  mxUtils as MxUtils,
 } from "mxgraph/javascript/mxClient";
+//import a modal from the components
+import Modal from "./../../../components/Modal.vue";
+//Imports the sidebar toolbar items
+import { relationshipTypes, toolbarItems } from "./toolbar";
 
 export default {
   name: "index2",
@@ -294,7 +288,7 @@ export default {
       this.graph.setCellsDisconnectable(true);
       this.graph.setPanning(true);
       this.graph.setAllowDanglingEdges(false);
-      this.graph.setCellsEditable(false); // 不可修改
+      this.graph.setCellsEditable(true); // 不可修改
       this.graph.convertValueToString = (cell) => {
         // 从value中获取显示的内容
         return this.R.prop("title", cell);
@@ -527,20 +521,31 @@ export default {
       var vm = this;
       reader.onload = (e) => {
         var xml = e.target.result;
-        vm.graph.model.beginUpdate();
-        try {
-          var doc = MxUtils.parseXml(
-            xml.substring(14, xml.length - 15)
-          ).documentElement;
-          console.log(doc);
-          console.log(vm.graph.model);
-          var node = doc;
-          var dec = new MxCodec(node.ownerDocument);
-          dec.decode(node, vm.graph.getModel());
-        } finally {
-          vm.graph.model.endUpdate();
+
+        var doc = MxUtils.parseXml(xml.substring(14, xml.length - 15));
+        vm.graph.model.clear();
+        let codec = new MxCodec(doc);
+        codec.decode(doc.documentElement, vm.graph.getModel());
+        let elt = doc.documentElement.firstChild;
+        let cells = [];
+        while (elt != null) {
+          let cell = codec.decode(elt);
+          console.log(cell);
+          if (
+            cell != undefined &&
+            (cell.nodeName == "feature" || cell.nodeName == "relationship")
+          ) {
+            if (cell.nodeName == "feature") {
+              this.addFeature(cell);
+            }
+            if (cell.nodeName == "relationship") {
+              this.addRelation(cell);
+            }
+            cells.push(cell);
+          }
+          elt = elt.nextSibling;
         }
-      };
+        console.log(cells);      };
       reader.readAsText(file);
     },
     /**
@@ -577,6 +582,73 @@ export default {
         null
       );
       a.dispatchEvent(e);
+    },
+    /**
+     * Adds a feature based on the data from an xml dom
+     */
+    addFeature(feature) {
+      let geom = feature.getElementsByTagName("mxGeometry")[0];
+      let auxCell = feature.getElementsByTagName("mxCell")[0];
+
+      let newFeature = document.createElement("Feature");
+      newFeature.setAttribute("name", feature.getAttribute("name"));
+      this.graph.getModel().beginUpdate();
+      try {
+        var vertex = this.graph.insertVertex(
+          this.graph.getDefaultParent(),
+          feature.getAttribute("id"),
+          newFeature,
+          geom.getAttribute("x"),
+          geom.getAttribute("y"),
+          geom.getAttribute("width"),
+          geom.getAttribute("height"),
+          auxCell.getAttribute("style")
+        );
+        console.log(vertex);
+        vertex.title = auxCell.getAttribute("title");
+      } finally {
+        this.graph.getModel().endUpdate();
+      }
+    },
+    /**
+     * Adds a realtionship based on the data from an xml dom
+     */
+    addRelation(relat) {
+      //type="Optional" relationship="Parenthood" mincardinality="0" maxcardinality="1" id="4"
+      //mxCell => style="startArrow=0;endArrow=oval;endFill=0" edge="1" parent="1" source="2" target="3">
+      //mxGeometry => relative="1" as="geometry"/>
+      let auxCell = relat.getElementsByTagName("mxCell")[0];
+
+      let newRelationship = document.createElement("Relationship");
+
+      let source = this.graph.model.getCell(auxCell.getAttribute("source"));
+      let target = this.graph.model.getCell(auxCell.getAttribute("target"));
+
+      if (relat.hasAttribute("mincardinality")) {
+        newRelationship.setAttribute(
+          "mincardinality",
+          relat.getAttribute("mincardinality")
+        );
+      }
+      if (relat.hasAttribute("maxcardinality")) {
+        newRelationship.setAttribute(
+          "maxcardinality",
+          relat.getAttribute("maxcardinality")
+        );
+      }
+
+      newRelationship.setAttribute("type", relat.getAttribute("type"));
+      newRelationship.setAttribute(
+        "relationship",
+        relat.getAttribute("relationship")
+      );
+
+      let edge = new MxCell(newRelationship, new MxGeometry());
+      edge.setEdge(true);
+      edge.setStyle(auxCell.getAttribute("style"));
+      edge.geometry.relative = true;
+
+      this.graph.addEdge(edge, null, source, target);
     },
     /*
     setGraphXml(node) {
