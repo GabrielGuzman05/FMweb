@@ -289,6 +289,7 @@ export default {
       this.graph.setPanning(true);
       this.graph.setAllowDanglingEdges(false);
       this.graph.setCellsEditable(true); // 不可修改
+      this.graph.enterStopsCellEditing(true);
       this.graph.convertValueToString = (cell) => {
         // 从value中获取显示的内容
         return this.R.prop("title", cell);
