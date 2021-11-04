@@ -55,6 +55,54 @@
           </button>
         </li>
       </ul>
+      <div id="properties" class="properties">
+        <table v-if="featureSelected">
+          <tr>
+            <label for="fname">Feature name:</label>
+            <input type="text" v-model="fName" id="fname" name="fname" />
+          </tr>
+          <tr>
+            <button v-on:click="changeName()">Change Name</button>
+          </tr>
+          <tr>
+            <button v-on:click="deleteCell()">Delete</button>
+          </tr>
+        </table>
+        <table v-else-if="relationSelected">
+          <tr>
+            Type:
+            {{
+              rType
+            }}
+          </tr>
+          <tr>
+            Relationship:
+            {{
+              rRealtionship
+            }}
+          </tr>
+          <tr>
+            Minimum Cardinality:
+            {{
+              rMinCardinality
+            }}
+          </tr>
+          <tr>
+            Maximum Cardinality:
+            {{
+              rMaxCardinality
+            }}
+          </tr>
+          <tr>
+            <button v-on:click="deleteCell()">Delete</button>
+          </tr>
+        </table>
+        <table v-else>
+          <tr>
+            None Selected
+          </tr>
+        </table>
+      </div>
     </div>
     <div class="graphContainer" ref="container" id="graphContainer"></div>
   </div>
@@ -92,6 +140,13 @@ export default {
     return {
       graph: null,
       relationType: "Optional",
+      featureSelected: false,
+      relationSelected: false,
+      fName: "",
+      rType: "",
+      rRealtionship: "",
+      rMinCardinality: 0,
+      rMaxCardinality: 0,
     };
   },
   methods: {
@@ -194,6 +249,7 @@ export default {
               }
             }
             //CST01
+
             if (!(minCardinality >= 0 && minCardinality <= maxCardinality)) {
               that.graph.removeCells([edge]);
               MxUtils.alert(
@@ -275,6 +331,10 @@ export default {
           }
         }
       );
+
+      this.graph.getSelectionModel().addListener(MxEvent.CHANGE, () => {
+        this.selectionChanged();
+      });
     },
     /**
      * Initailizes the graph elemnts and adds an event for double click
@@ -288,8 +348,8 @@ export default {
       this.graph.setCellsDisconnectable(true);
       this.graph.setPanning(true);
       this.graph.setAllowDanglingEdges(false);
-      this.graph.setCellsEditable(true); // 不可修改
-      this.graph.enterStopsCellEditing(true);
+      this.graph.setCellsEditable(false); // 不可修改
+      //this.graph.enterStopsCellEditing=true;
       this.graph.convertValueToString = (cell) => {
         // 从value中获取显示的内容
         return this.R.prop("title", cell);
@@ -654,51 +714,55 @@ export default {
 
       this.graph.addEdge(edge, null, source, target);
     },
-    /*
-    setGraphXml(node) {
-      if (node != null) {
-        var dec = new MxCodec(node.ownerDocument);
+    /**
+     * Changes the values for the selected cell to activate the properties panel
+     */
+    selectionChanged() {
+      let cell = this.graph.getSelectionCell();
 
-        if (node.nodeName == "mxGraphModel") {
-          this.graph.model.beginUpdate();
-
-          try {
-            this.graph.model.clear();
-            this.graph.view.scale = 1;
-            this.readGraphState(node);
-            this.updateGraphComponents();
-            dec.decode(node, this.graph.getModel());
-          } finally {
-            this.graph.model.endUpdate();
-          }
-
-          this.fireEvent(new mxEventObject("resetGraphView"));
-        } else if (node.nodeName == "root") {
-          this.resetGraph();
-
-          // Workaround for invalid XML output in Firefox 20 due to bug in mxUtils.getXml
-          var wrapper = dec.document.createElement("mxGraphModel");
-          wrapper.appendChild(node);
-
-          dec.decode(wrapper, this.graph.getModel());
-          this.updateGraphComponents();
-          this.fireEvent(new mxEventObject("resetGraphView"));
-        } else {
-          throw {
-            message: mxResources.get("cannotOpenFile"),
-            node: node,
-            toString: function () {
-              return this.message;
-            },
-          };
-        }
+      if (cell == null) {
+        this.featureSelected = false;
+        this.relationSelected = false;
       } else {
-        this.resetGraph();
-        this.graph.model.clear();
-        this.fireEvent(new mxEventObject("resetGraphView"));
+        if (cell.value.nodeName == "FEATURE") {
+          this.featureSelected = true;
+          this.relationSelected = false;
+          this.fName = cell.getAttribute("name");
+        } else if (cell.value.nodeName == "RELATIONSHIP") {
+          this.featureSelected = false;
+          this.relationSelected = true;
+          this.rType = cell.getAttribute("type");
+          this.rRealtionship = cell.getAttribute("relationship");
+          this.rMinCardinality = cell.getAttribute("mincardinality");
+          this.rMaxCardinality = cell.getAttribute("maxcardinality");
+        }
       }
     },
-    */
+    /**
+     * Removes the selected element from the graph
+     */
+    deleteCell() {
+      let cell = this.graph.getSelectionCell();
+      this.graph.getModel().beginUpdate();
+      try {
+        this.graph.removeCells([cell]);
+      } finally {
+        this.graph.getModel().endUpdate();
+      }
+    },
+    /**
+     * Changes the name from the selected feature
+     */
+    changeName() {
+      let cell = this.graph.getSelectionCell();
+      this.graph.getModel().beginUpdate();
+      try {
+        cell.setAttribute("name", this.fName);
+        this.graph.updateCellSize(cell);
+      } finally {
+        this.graph.getModel().endUpdate();
+      }
+    },
   },
   mounted() {
     this.createGraph();
@@ -718,6 +782,7 @@ export default {
   position: relative;
 
   .options {
+    height: 10%;
     flex: 1;
     position: top;
   }
@@ -751,6 +816,15 @@ export default {
         }
       }
     }
+  }
+  .properties {
+    background-color: "#ffffff";
+    margin: "10px";
+    padding: "10px";
+    text-align: "center";
+    flex-wrap: "wrap";
+    justify-content: "center";
+    border: "2px solid black";
   }
 
   .graphContainer {
