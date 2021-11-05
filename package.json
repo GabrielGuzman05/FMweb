@@ -1,8 +1,7 @@
 {
-  "name": "vue-mxgraph-example",
-  "version": "0.1.0",
+  "name": "fm-web",
+  "version": "0.2.0",
   "private": true,
-  "homepage": "https://lanniu.github.io/vue-mxgraph-example",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",

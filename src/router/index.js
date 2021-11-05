@@ -12,7 +12,7 @@ export const demoRouter = [
       icon: require('@/assets/icon/home.png')
     },
     component: () => import('@/views/example/welcome')
-  },
+  }/*,
   {
     path: 'cascadeDelete',
     name: 'cascadeDelete',
@@ -102,7 +102,9 @@ export const demoRouter = [
       icon: require('@/assets/icon/group.png')
     },
     component: () => import('@/views/example/groupEditor')
-  },
+  }*/
+  ,
+  
   {
     path: 'fmWeb',
     name: 'fmWeb',

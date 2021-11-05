@@ -33,78 +33,81 @@
         </template>
       </modal>
     </div>
-    <div class="toolbarContainer" id="toolbarContainer">
-      <ul>
-        <li v-for="item in toolbarItems" :key="item['title']" ref="toolItem">
-          <img :src="item['icon']" :alt="item['title']" />
-          <span>{{ item["title"] }}</span>
-        </li>
-      </ul>
-      <br />
-      <p>Relationships</p>
-      <p>Current: {{ relationType }}</p>
-      <ul>
-        <li
-          v-for="item in relationshipTypes"
-          :key="item['title']"
-          ref="relItem"
-        >
-          <button v-on:click="relationType = item['title']">
+    <br>
+    <div class="workspace">
+      <div class="toolbarContainer" id="toolbarContainer">
+        <ul>
+          <li v-for="item in toolbarItems" :key="item['title']" ref="toolItem">
             <img :src="item['icon']" :alt="item['title']" />
             <span>{{ item["title"] }}</span>
-          </button>
-        </li>
-      </ul>
-      <div id="properties" class="properties">
-        <table v-if="featureSelected">
-          <tr>
-            <label for="fname">Feature name:</label>
-            <input type="text" v-model="fName" id="fname" name="fname" />
-          </tr>
-          <tr>
-            <button v-on:click="changeName()">Change Name</button>
-          </tr>
-          <tr>
-            <button v-on:click="deleteCell()">Delete</button>
-          </tr>
-        </table>
-        <table v-else-if="relationSelected">
-          <tr>
-            Type:
-            {{
-              rType
-            }}
-          </tr>
-          <tr>
-            Relationship:
-            {{
-              rRealtionship
-            }}
-          </tr>
-          <tr>
-            Minimum Cardinality:
-            {{
-              rMinCardinality
-            }}
-          </tr>
-          <tr>
-            Maximum Cardinality:
-            {{
-              rMaxCardinality
-            }}
-          </tr>
-          <tr>
-            <button v-on:click="deleteCell()">Delete</button>
-          </tr>
-        </table>
-        <table v-else>
-          <tr>
-            None Selected
-          </tr>
-        </table>
+          </li>
+        </ul>
+        <br />
+        <p>Relationships</p>
+        <p>Current: {{ relationType }}</p>
+        <ul>
+          <li
+            v-for="item in relationshipTypes"
+            :key="item['title']"
+            ref="relItem"
+          >
+            <button v-on:click="relationType = item['title']">
+              <img :src="item['icon']" :alt="item['title']" />
+              <span>{{ item["title"] }}</span>
+            </button>
+          </li>
+        </ul>
+        <div id="properties" class="properties">
+          <table v-if="featureSelected">
+            <tr>
+              <label for="fname">Feature name:</label>
+              <input type="text" v-model="fName" id="fname" name="fname" />
+            </tr>
+            <tr>
+              <button v-on:click="changeName()">Change Name</button>
+            </tr>
+            <tr>
+              <button v-on:click="deleteCell()">Delete</button>
+            </tr>
+          </table>
+          <table v-else-if="relationSelected">
+            <tr>
+              Type:
+              {{
+                rType
+              }}
+            </tr>
+            <tr>
+              Relationship:
+              {{
+                rRealtionship
+              }}
+            </tr>
+            <tr>
+              Minimum Cardinality:
+              {{
+                rMinCardinality
+              }}
+            </tr>
+            <tr>
+              Maximum Cardinality:
+              {{
+                rMaxCardinality
+              }}
+            </tr>
+            <tr>
+              <button v-on:click="deleteCell()">Delete</button>
+            </tr>
+          </table>
+          <table v-else>
+            <tr>
+              None Selected
+            </tr>
+          </table>
+        </div>
       </div>
+      <div class="graphContainer" ref="container" id="graphContainer"></div>
     </div>
-    <div class="graphContainer" ref="container" id="graphContainer"></div>
   </div>
 </template>
 <script>
@@ -790,46 +793,53 @@ export default {
     content: "\a";
     white-space: pre;
   }
-  .toolbarContainer {
-    flex: 1;
-    font-size: 20px;
-    background: #efefef;
-    text-align: center;
-    padding-top: 20px;
+  .workspace {
+    width: 100%;
+    height: 90%;
+    display: flex;
+    position: relative;
 
-    ul {
-      padding: 0;
-      margin: 0;
+    .toolbarContainer {
+      flex: 1;
+      font-size: 20px;
+      background: #efefef;
+      text-align: center;
+      padding-top: 20px;
 
-      li {
-        list-style: none;
-        margin-bottom: 10px;
-        cursor: pointer;
+      ul {
+        padding: 0;
+        margin: 0;
 
-        img {
-          width: 15px;
-          height: 15px;
-        }
+        li {
+          list-style: none;
+          margin-bottom: 10px;
+          cursor: pointer;
 
-        span {
-          margin-left: 15px;
+          img {
+            width: 15px;
+            height: 15px;
+          }
+
+          span {
+            margin-left: 15px;
+          }
         }
       }
+      .properties {
+        background: #ffffff;
+        margin: 10px;
+        padding: 10px;
+        text-align: center;
+        flex-wrap: wrap;
+        justify-content: center;
+        border: 2px solid black;
+      }
     }
-  }
-  .properties {
-    background-color: "#ffffff";
-    margin: "10px";
-    padding: "10px";
-    text-align: "center";
-    flex-wrap: "wrap";
-    justify-content: "center";
-    border: "2px solid black";
-  }
 
-  .graphContainer {
-    position: relative;
-    flex: 7;
+    .graphContainer {
+      position: relative;
+      flex: 7;
+    }
   }
 }
 </style>

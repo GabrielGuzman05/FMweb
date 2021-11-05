@@ -1,29 +1,20 @@
 <template>
   <div class="welcomeContainer">
+    <h1>Welcome to the FMweb homepage</h1>
     <h3>
-      这个项目是mxGraph + vue的简单例子的Demo
+      This is a prototype for a correct synthax feature modeling tool
     </h3>
     <h4>
-      现在只有几个简单的小例子，如果想看mxGraph什么Demo可以给我提issue。
+      It works on vue.js and the drawing library mxgraph
     </h4>
     <h4>
-      联系方式：
+      If you want to try working with it go to the sidebar and click on the second element that will have the name pop-up FMweb
     </h4>
-    <ul>
-      <li>邮箱：<a href="mailto:271067929@qq.com">271067929@qq.com</a></li>
-      <li>微信：lanniu770314</li>
-    </ul>
     <h4>
-      博客
+      More Information:
     </h4>
     <ul>
-      <li><a href="https://blog.csdn.net/dikentoujing99">懒牛不爱梳毛</a></li>
-    </ul>
-    <h4>
-      Github
-    </h4>
-    <ul>
-      <li><a href="https://github.com/lanniu">LanNiu</a></li>
+      <li>Lorem Ipsum</li>
     </ul>
   </div>
 </template>
