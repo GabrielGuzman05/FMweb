@@ -2,9 +2,7 @@
   <el-container class="layoutContainer">
     <sidebar/>
     <el-container>
-      <el-header>
-        <navbar/>
-      </el-header>
+      
       <el-main>
         <transition name="fade-transform" mode="out-in">
           <keep-alive>

@@ -1,6 +1,6 @@
 <template>
   <div class="customToolbarContainer">
-    <div class="options">
+    <div class="options row">
       <button v-on:click="exportGraphXML()">Export</button>
       <button type="button" v-on:click="saveFile()">Save as File</button>
       <button
@@ -33,8 +33,7 @@
         </template>
       </modal>
     </div>
-    <br>
-    <div class="workspace">
+    <div class="workspace row">
       <div class="toolbarContainer" id="toolbarContainer">
         <ul>
           <li v-for="item in toolbarItems" :key="item['title']" ref="toolItem">
@@ -57,10 +56,11 @@
             </button>
           </li>
         </ul>
+        <br>
         <div id="properties" class="properties">
           <table v-if="featureSelected">
             <tr>
-              <label for="fname">Feature name:</label>
+              <label for="fname">Feature Name:</label>
               <input type="text" v-model="fName" id="fname" name="fname" />
             </tr>
             <tr>
@@ -246,9 +246,12 @@ export default {
             else if (that.relationType == "Optional") {
               if (!(minCardinality == 0)) {
                 that.graph.removeCells([edge]);
+
                 MxUtils.alert(
                   "DEF02. Can't create Optional. Minimum cardinality must be equal to 0"
                 );
+                that.graph.clearSelection();
+                that.relationSelected = false;
               }
             }
             //CST01
@@ -347,21 +350,20 @@ export default {
       if (this.R.isNil(this.graph)) {
         return;
       }
-      this.graph.setConnectable(true); // 允许连线
-      this.graph.setCellsDisconnectable(true);
+      this.graph.setConnectable(true);
+      this.graph.setCellsDisconnectable(false);
       this.graph.setPanning(true);
       this.graph.setAllowDanglingEdges(false);
-      this.graph.setCellsEditable(false); // 不可修改
+      this.graph.setCellsEditable(false);
+      this.graph.setMultigraph(false);
       //this.graph.enterStopsCellEditing=true;
       this.graph.convertValueToString = (cell) => {
-        // 从value中获取显示的内容
         return this.R.prop("title", cell);
       };
       this.graph.addListener(MxEvent.DOUBLE_CLICK, (graph, evt) => {
-        // 监听双击事件
         const cell = this.R.pathOr([], ["properties", "cell"], evt);
 
-        console.info(cell); // 在控制台输出双击的cell
+        console.info(cell);
       });
 
       this.graph.convertValueToString = function (cell) {
@@ -781,23 +783,22 @@ export default {
 .customToolbarContainer {
   width: 100%;
   height: 100%;
-  display: flex;
   position: relative;
 
   .options {
-    height: 10%;
+    display: flex;
+    height: 20px;
     flex: 1;
-    position: top;
-  }
-  .options::after {
-    content: "\a";
-    white-space: pre;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    margin-bottom: 2px;
   }
   .workspace {
-    width: 100%;
-    height: 90%;
+    height: 100%;
     display: flex;
     position: relative;
+    width: 100%;
 
     .toolbarContainer {
       flex: 1;
@@ -840,6 +841,12 @@ export default {
       position: relative;
       flex: 7;
     }
+  }
+  .row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
   }
 }
 </style>
