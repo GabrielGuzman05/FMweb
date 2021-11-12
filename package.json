@@ -6,10 +6,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "start": "vue-cli-service serve",
-    "docker_build": "docker build -t lanniu/vue-mxgraph-example .",
-    "docker_delete_exist": "chmod +x ./docker_delete_container_by_name.sh && ./docker_delete_container_by_name.sh vue-mxgraph-example",
-    "docker_deploy": "docker run -id -p 3221:80 --name vue-mxgraph-example lanniu/vue-mxgraph-example"
+    "start": "node server.js",
   },
   "dependencies": {
     "@vue/cli": "^3.4.1",
