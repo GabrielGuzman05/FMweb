@@ -6,12 +6,12 @@
       <button
         type="button"
         id="show-modal"
-        v-on:click="$refs.modalName.openModal()"
+        v-on:click="$refs.modalImport.openModal()"
       >
         Import Model
       </button>
       <button type="button" v-on:click="saveImage()">Save as Image</button>
-      <modal ref="modalName">
+      <modal ref="modalImport">
         <template v-slot:header>
           <h1>Select a Model File and Upload it</h1>
         </template>
@@ -27,11 +27,37 @@
 
         <template v-slot:footer>
           <div>
-            <button @click="$refs.modalName.closeModal()">Cancel</button>
-            <button @click="$refs.modalName.closeModal()">Save</button>
+            <button @click="$refs.modalImport.closeModal()">Cancel</button>
+            <button @click="$refs.modalImport.closeModal()">Save</button>
           </div>
         </template>
       </modal>
+      <el-dialog
+        title="Cardinality Input"
+        :visible.sync="dialogFormVisible"
+        :before-close="handleClose"
+      >
+        <el-form>
+          <el-form-item label="Minimum Cardinality" :label-width="labelWidth">
+            <el-input-number
+              v-model="inputMinCar"
+              controls-position="right"
+              :min="0"
+            ></el-input-number>
+          </el-form-item>
+          <el-form-item label="Maximum Cardinality" :label-width="labelWidth">
+            <el-input-number
+              v-model="inputMaxCar"
+              controls-position="right"
+              :min="0"
+            ></el-input-number>
+          </el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="handleClose">Cancel</el-button>
+          <el-button type="primary" @click="carInputSave()">Confirm</el-button>
+        </span>
+      </el-dialog>
     </div>
     <div class="workspace row">
       <div class="toolbarContainer" id="toolbarContainer">
@@ -56,7 +82,7 @@
             </button>
           </li>
         </ul>
-        <br>
+        <br />
         <div id="properties" class="properties">
           <table v-if="featureSelected">
             <tr>
@@ -124,11 +150,15 @@ import {
   mxPoint as MxPoint,
   mxShape as MxShape,
   mxUtils as MxUtils,
+  mxGraphModel as mxGraphModel,
+  mxRectangle as MxRectangle,
 } from "mxgraph/javascript/mxClient";
 //import a modal from the components
 import Modal from "./../../../components/Modal.vue";
 //Imports the sidebar toolbar items
 import { relationshipTypes, toolbarItems } from "./toolbar";
+
+import mxIconSet from "./toolbar";
 
 export default {
   name: "index2",
@@ -150,6 +180,10 @@ export default {
       rRealtionship: "",
       rMinCardinality: 0,
       rMaxCardinality: 0,
+      inputMinCar: 0,
+      inputMaxCar: 0,
+      dialogFormVisible: false,
+      labelWidth: "120 px",
     };
   },
   methods: {
@@ -215,126 +249,10 @@ export default {
         return edge;
       };
 
-      let self = this;
       this.graph.connectionHandler.addListener(
         MxEvent.CONNECT,
         function (sender, evt) {
-          let edge = evt.getProperty("cell");
-          let target = that.graph.getModel().getTerminal(edge, false);
-          let source = that.graph.getModel().getTerminal(edge, true);
-
-          //DEF01, DEF02, CST01
-          if (
-            that.relationType == "Mandatory" ||
-            that.relationType == "Optional"
-          ) {
-            let minCardinality = MxUtils.prompt("Minimum Cardinality");
-            let maxCardinality = MxUtils.prompt("Maximum Cardinality");
-            edge.setAttribute("minCardinality", minCardinality);
-            edge.setAttribute("maxCardinality", maxCardinality);
-
-            //DEF01
-            if (that.relationType == "Mandatory") {
-              if (!(minCardinality > 0)) {
-                that.graph.removeCells([edge]);
-                MxUtils.alert(
-                  "DEF01. Can't create Mandatory. Minimum cardinality must be greater than 0"
-                );
-              }
-            }
-            //DEF02
-            else if (that.relationType == "Optional") {
-              if (!(minCardinality == 0)) {
-                that.graph.removeCells([edge]);
-
-                MxUtils.alert(
-                  "DEF02. Can't create Optional. Minimum cardinality must be equal to 0"
-                );
-                that.graph.clearSelection();
-                that.relationSelected = false;
-              }
-            }
-            //CST01
-
-            if (!(minCardinality >= 0 && minCardinality <= maxCardinality)) {
-              that.graph.removeCells([edge]);
-              MxUtils.alert(
-                "CST01. Cant't create " +
-                  that.relationType +
-                  ". Minimum Cardinality < 0 or Minimum Cardinality > Maximum Cardinality"
-              );
-            }
-          }
-
-          //CST04, CST05
-          if (that.relationType == "Or" || that.relationType == "Alternative") {
-            //CST04
-            let rel = self.fuseArrays(
-              self.getRelationships("Mandatory"),
-              self.getRelationships("Optional")
-            );
-            let a = self.filterTarget(target, rel);
-            let b = self.filterTarget(source, rel);
-            a = self.getSources(a);
-            b = self.getSources(b);
-            if (!self.compareVertex(a, b)) {
-              that.graph.removeCells([edge]);
-              MxUtils.alert(
-                "CST04. Can't create " +
-                  that.relationType +
-                  ". Only between brothers"
-              );
-            }
-            //CST05
-            rel = self.getRelationships("Mandatory");
-            a = self.filterTarget(target, rel);
-            b = self.filterTarget(source, rel);
-            a = self.getSources(a);
-            b = self.getSources(b);
-            if (!self.compareVertex(a, b)) {
-              that.graph.removeCells([edge]);
-              MxUtils.alert(
-                "CST05. Can't create " +
-                  that.relationType +
-                  ". Only between Mandatory Features"
-              );
-            }
-          }
-
-          //CST07, CST08
-          if (
-            that.relationType == "Requires" ||
-            that.relationType == "Excludes"
-          ) {
-            //CST07
-            let rel = self.fuseArrays(
-              self.getRelationships("Mandatory"),
-              self.getRelationships("Optional")
-            );
-            let a = self.filterTarget(target, rel);
-            let b = self.filterTarget(source, rel);
-            a = self.getSources(a);
-            b = self.getSources(b);
-            if (self.compareVertex(a, b)) {
-              that.graph.removeCells([edge]);
-              MxUtils.alert(
-                "CST07. Can't create " + that.relationType + " between brothers"
-              );
-            }
-
-            // //CST08
-            // if(relationType == "Excludes"){
-            //     let descendantsArray = new Array();
-            //     descendantsArray = self.getDescendants(source, descendantsArray);
-            //     console.log(descendantsArray);
-            //     if(!self.findInArray(descendantsArray, target)){
-            //         MxUtils.alert("CST08 se cumple");
-            //     }
-            //     else{
-            //         MxUtils.alert("CST08 NO se cumple");
-            //     }
-            // }
-          }
+          that.applyRules(that, evt);
         }
       );
 
@@ -350,6 +268,8 @@ export default {
       if (this.R.isNil(this.graph)) {
         return;
       }
+      var that = this;
+
       this.graph.setConnectable(true);
       this.graph.setCellsDisconnectable(false);
       this.graph.setPanning(true);
@@ -358,12 +278,107 @@ export default {
       this.graph.setMultigraph(false);
       //this.graph.enterStopsCellEditing=true;
       this.graph.convertValueToString = (cell) => {
-        return this.R.prop("title", cell);
+        return this.R.prop("name", cell);
       };
       this.graph.addListener(MxEvent.DOUBLE_CLICK, (graph, evt) => {
         const cell = this.R.pathOr([], ["properties", "cell"], evt);
-
         console.info(cell);
+        this.$prompt("Please input a new name for the Feature", "Tip", {
+          confirmButtonText: "OK",
+          cancelButtonText: "Cancel",
+          //inputPattern:  /[\w!#$%&'*+/=?^_`{|}~-]+(?:\.[\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\w](?:[\w-]*[\w])?\.)+[\w](?:[\w-]*[\w])?/,
+          inputErrorMessage: "Invalid Name",
+        })
+          .then(({ value }) => {
+            let cell = this.graph.getSelectionCell();
+            this.graph.getModel().beginUpdate();
+            try {
+              console.log(value);
+              cell.setAttribute("name", value);
+              var preferred = this.graph.getPreferredSizeForCell(cell);
+              this.graph.updateCellSize(cell, true);
+              var current = cell.getGeometry();
+              var width = 150;
+              var height = 50;
+              current.width = preferred.width > width ? preferred.width : width;
+              current.height =
+                preferred.height > height ? preferred.height : height;
+            } finally {
+              this.graph.getModel().endUpdate();
+            }
+          })
+          .catch(() => {
+            this.$message({
+              type: "info",
+              message: "Input canceled",
+            });
+          });
+      });
+
+      var iconTolerance = 20;
+
+      this.graph.addMouseListener({
+        currentState: null,
+        currentIconSet: null,
+        mouseDown: function (sender, me) {
+          // Hides icons on mouse down
+          if (this.currentState != null) {
+            this.dragLeave(me.getEvent(), this.currentState);
+            this.currentState = null;
+          }
+        },
+        mouseMove: function (sender, me) {
+          if (
+            this.currentState != null &&
+            (me.getState() == this.currentState || me.getState() == null)
+          ) {
+            var tol = iconTolerance;
+            var tmp = new MxRectangle(
+              me.getGraphX() - tol,
+              me.getGraphY() - tol,
+              2 * tol,
+              2 * tol
+            );
+
+            if (MxUtils.intersects(tmp, this.currentState)) {
+              return;
+            }
+          }
+
+          tmp = that.graph.view.getState(me.getCell());
+
+          // Ignores everything but vertices
+          if (
+            that.graph.isMouseDown ||
+            (tmp != null && !that.graph.getModel().isVertex(tmp.cell))
+          ) {
+            tmp = null;
+          }
+
+          if (tmp != this.currentState) {
+            if (this.currentState != null) {
+              this.dragLeave(me.getEvent(), this.currentState);
+            }
+
+            this.currentState = tmp;
+
+            if (this.currentState != null) {
+              this.dragEnter(me.getEvent(), this.currentState);
+            }
+          }
+        },
+        mouseUp: function (sender, me) {},
+        dragEnter: function (evt, state) {
+          if (this.currentIconSet == null) {
+            this.currentIconSet = new mxIconSet(state);
+          }
+        },
+        dragLeave: function (evt, state) {
+          if (this.currentIconSet != null) {
+            this.currentIconSet.destroy();
+            this.currentIconSet = null;
+          }
+        },
       });
 
       this.graph.convertValueToString = function (cell) {
@@ -767,6 +782,289 @@ export default {
       } finally {
         this.graph.getModel().endUpdate();
       }
+    },
+    /**
+     * Gets all the descendants of a given cell
+     * Return an array with all the descendants
+     */
+    getDescendants(cell, descendantsArray) {
+      //Gets all descendants of a given cell
+      let self = this;
+      let outgoing = mxGraphModel.prototype.getOutgoingEdges(cell);
+      let descendants = self.getTargets(outgoing);
+      if (descendants.length > 0) {
+        descendantsArray = self.fuseArrays(descendantsArray, descendants);
+        for (let i = 0; i < descendants.length; i++) {
+          self.getDescendants(descendants[i], descendantsArray);
+        }
+      }
+      return descendantsArray;
+    },
+    /**
+     * Gets all the ancestors of a given cell
+     * Returns and array of all the ancestors
+     */
+    getAncestors(cell, ancestorsArray) {
+      //Gets all ancestors of a given cell
+      let self = this;
+      let incoming = mxGraphModel.prototype.getIncomingEdges(cell);
+      let ancestors = self.getSources(incoming);
+      if (ancestors.length > 0) {
+        ancestorsArray = self.fuseArrays(ancestorsArray, ancestors);
+        for (let i = 0; i < ancestors.length; i++) {
+          self.getAncestors(ancestors[i], ancestorsArray);
+        }
+      }
+      return ancestorsArray;
+    },
+    /**
+     * Gets all the relationships that are of the same type
+     * Retunrs an array with all the cells that represent the given type of relationship
+     */
+    getRelationships(relationshipType) {
+      //Gets all relationships of the given type
+      let allCells = this.graph.getDefaultParent().children;
+      let edges = new Array();
+      for (let i = 0; i < allCells.length; i++) {
+        if (!allCells[i].isVertex()) {
+          if (allCells[i].value.attributes.type.nodeValue == relationshipType) {
+            edges.push(allCells[i]);
+          }
+        }
+      }
+      return edges;
+    },
+    filterSource(sourceVertex, arrayEdges) {
+      //Gets all edges in arrayEdges where sourceVertex is the source
+      let finalArray = new Array();
+      for (let i = 0; i < arrayEdges; i++) {
+        if (
+          this.graph.getModel().getTerminal(arrayEdges[i], true) == sourceVertex
+        ) {
+          finalArray.push(arrayEdges[i]);
+        }
+      }
+      return finalArray;
+    },
+    filterTarget(targetVertex, arrayEdges) {
+      //Gets all edges in arrayEdges where targetVertex is the target
+      let finalArray = new Array();
+      for (let i = 0; i < arrayEdges.length; i++) {
+        if (
+          this.graph.getModel().getTerminal(arrayEdges[i], false) ==
+          targetVertex
+        ) {
+          finalArray.push(arrayEdges[i]);
+        }
+      }
+      return finalArray;
+    },
+    getSources(arrayEdges) {
+      //Gets all the sources from the edges in arrayEdges
+      let arraySources = new Array();
+      for (let i = 0; i < arrayEdges.length; i++) {
+        arraySources.push(
+          this.graph.getModel().getTerminal(arrayEdges[i], true)
+        );
+      }
+      return arraySources;
+    },
+    getTargets(arrayEdges) {
+      //Gets all the targets from the edges in arrayEdges
+      let arrayTargets = new Array();
+      for (let i = 0; i < arrayEdges.length; i++) {
+        arrayTargets.push(
+          this.graph.getModel().getTerminal(arrayEdges[i], false)
+        );
+      }
+      return arrayTargets;
+    },
+    compareVertex(arrayVertexA, arrayVertexB) {
+      //Compares if there is any coincidence from the vertex in arrayA and arrayB. true = any coincidences found
+      for (let i = 0; i < arrayVertexA.length; i++) {
+        for (let j = 0; j < arrayVertexB.length; j++) {
+          if (arrayVertexA[i] == arrayVertexB[j]) {
+            return true;
+          }
+        }
+      }
+      return false;
+    },
+    findInArray(arrayVertex, vertex) {
+      //Looks if vertex is present in arrayVertex. true = vertex found
+      for (let i = 0; i < arrayVertex.length; i++) {
+        if (arrayVertex[i] == vertex) {
+          return true;
+        }
+      }
+      return false;
+    },
+    fuseArrays(arrayA, arrayB) {
+      //Fuses arrayA and arrayB getting rid of all duplicates
+      let finalArray = new Array();
+      for (let i = 0; i < arrayA.length; i++) {
+        if (!finalArray.includes(arrayA[i])) {
+          finalArray.push(arrayA[i]);
+        }
+      }
+      for (let i = 0; i < arrayB.length; i++) {
+        if (!finalArray.includes(arrayB[i])) {
+          finalArray.push(arrayB[i]);
+        }
+      }
+      return finalArray;
+    },
+    /*
+     *Wrapper for the rule usage on connection
+     */
+    applyRules(that, evt) {
+      let edge = evt.getProperty("cell");
+      let target = that.graph.getModel().getTerminal(edge, false);
+      let source = that.graph.getModel().getTerminal(edge, true);
+
+      //DEF01, DEF02, CST01
+      if (that.relationType == "Mandatory" || that.relationType == "Optional") {
+        this.carInputOpen();
+      }
+
+      //CST04, CST05
+      if (that.relationType == "Or" || that.relationType == "Alternative") {
+        //CST04
+        let rel = that.fuseArrays(
+          that.getRelationships("Mandatory"),
+          that.getRelationships("Optional")
+        );
+        let a = that.filterTarget(target, rel);
+        let b = that.filterTarget(source, rel);
+        a = that.getSources(a);
+        b = that.getSources(b);
+        if (!that.compareVertex(a, b)) {
+          that.graph.removeCells([edge]);
+          MxUtils.alert(
+            "CST04. Can't create " +
+              that.relationType +
+              ". Only between brothers"
+          );
+        }
+        //CST05
+        rel = that.getRelationships("Mandatory");
+        a = that.filterTarget(target, rel);
+        b = that.filterTarget(source, rel);
+        a = that.getSources(a);
+        b = that.getSources(b);
+        if (!that.compareVertex(a, b)) {
+          that.graph.removeCells([edge]);
+          MxUtils.alert(
+            "CST05. Can't create " +
+              that.relationType +
+              ". Only between Mandatory Features"
+          );
+        }
+      }
+
+      //CST07, CST08
+      if (that.relationType == "Requires" || that.relationType == "Excludes") {
+        //CST07
+        let rel = that.fuseArrays(
+          that.getRelationships("Mandatory"),
+          that.getRelationships("Optional")
+        );
+        let a = that.filterTarget(target, rel);
+        let b = that.filterTarget(source, rel);
+        a = that.getSources(a);
+        b = that.getSources(b);
+        if (that.compareVertex(a, b)) {
+          that.graph.removeCells([edge]);
+          MxUtils.alert(
+            "CST07. Can't create " + that.relationType + " between brothers"
+          );
+        }
+
+        // //CST08
+        // if(relationType == "Excludes"){
+        //     let descendantsArray = new Array();
+        //     descendantsArray = that.getDescendants(source, descendantsArray);
+        //     console.log(descendantsArray);
+        //     if(!that.findInArray(descendantsArray, target)){
+        //         MxUtils.alert("CST08 se cumple");
+        //     }
+        //     else{
+        //         MxUtils.alert("CST08 NO se cumple");
+        //     }
+        // }
+      }
+    },
+    carInputOpen() {
+      this.dialogFormVisible = true;
+    },
+    carInputSave() {
+      this.dialogFormVisible = false;
+
+      let minCardinality = this.inputMinCar;
+      let maxCardinality = this.inputMaxCar;
+
+      //let minCardinality = MxUtils.prompt("Minimum Cardinality");
+      //let maxCardinality = MxUtils.prompt("Maximum Cardinality");
+      let edge = this.graph.getSelectionCell();
+      edge.setAttribute("minCardinality", minCardinality);
+      edge.setAttribute("maxCardinality", maxCardinality);
+
+      if (minCardinality == null || maxCardinality == null) {
+        MxUtils.alert(
+          "You didn't complete the min or max cardinality input request or canceled it, so the relationship will be removed"
+        );
+        this.graph.removeCells([edge]);
+        return;
+      }
+      //DEF01
+      if (this.relationType == "Mandatory") {
+        if (!(minCardinality > 0)) {
+          this.graph.removeCells([edge]);
+          MxUtils.alert(
+            "DEF01. Can't create Mandatory. Minimum cardinality must be greater than 0"
+          );
+        }
+      }
+      //DEF02
+      else if (this.relationType == "Optional") {
+        if (!(minCardinality == 0)) {
+          this.graph.removeCells([edge]);
+
+          MxUtils.alert(
+            "DEF02. Can't create Optional. Minimum cardinality must be equal to 0"
+          );
+          this.graph.clearSelection();
+          this.relationSelected = false;
+        }
+      }
+      //CST01
+
+      if (!(minCardinality >= 0 && minCardinality <= maxCardinality)) {
+        this.graph.removeCells([edge]);
+        MxUtils.alert(
+          "CST01. Cant't create " +
+            this.relationType +
+            ". Minimum Cardinality < 0 or Minimum Cardinality > Maximum Cardinality"
+        );
+      }
+    },
+    /**
+     * Handles the close event for dialog
+     */
+    handleClose() {
+      this.$confirm("Are you sure to close this dialog?")
+        .then(() => {
+          this.dialogFormVisible = false;
+          let edge = this.graph.getSelectionCell();
+          this.graph.removeCells([edge]);
+          this.$message({
+            type: "info",
+            message: "Cadinality Input canceled, the relation was be removed",
+          });
+        })
+        .catch(() => {
+          
+        });
     },
   },
   mounted() {
