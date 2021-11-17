@@ -1,11 +1,13 @@
-/*
+
 import {
-  mxConstants as MxConstants
+  mxUtils,
+  mxEvent,
 } from 'mxgraph/javascript/mxClient'
-*/
+
 //const outputIcon = './icon/output.png'
 //const inputIcon = './icon/input.png'
 //Imports the icons from the assets icon folder
+
 const featureIcon = './icon/feature.png'
 const relationIcon = './icon/link.png'
 
@@ -120,3 +122,48 @@ export const relationshipTypes = [
     }
   },
 ]
+
+// Defines a new class for all icons
+export default function mxIconSet(state) {
+  this.images = [];
+  var graph = state.view.graph;
+
+  // Delete
+  var img = mxUtils.createImage('./icon/delete.png');
+  img.setAttribute('title', 'Delete');
+  img.style.position = 'absolute';
+  img.style.cursor = 'pointer';
+  img.style.width = '16px';
+  img.style.height = '16px';
+  img.style.left = (state.x + state.width) + 'px';
+  img.style.top = (state.y - 16) + 'px';
+
+  mxEvent.addGestureListeners(img,
+    mxUtils.bind(this, function (evt) {
+      // Disables dragging the image
+      mxEvent.consume(evt);
+    })
+  );
+
+  mxEvent.addListener(img, 'click',
+    mxUtils.bind(this, function (evt) {
+      graph.removeCells([state.cell]);
+      mxEvent.consume(evt);
+      this.destroy();
+    })
+  );
+
+  state.view.graph.container.appendChild(img);
+  this.images.push(img);
+}
+
+mxIconSet.prototype.destroy = function () {
+  if (this.images != null) {
+    for (var i = 0; i < this.images.length; i++) {
+      var img = this.images[i];
+      img.parentNode.removeChild(img);
+    }
+  }
+
+  this.images = null;
+};
