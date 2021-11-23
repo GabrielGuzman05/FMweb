@@ -63,8 +63,10 @@
       <div class="toolbarContainer" id="toolbarContainer">
         <ul>
           <li v-for="item in toolbarItems" :key="item['title']" ref="toolItem">
-            <img :src="item['icon']" :alt="item['title']" />
-            <span>{{ item["title"] }}</span>
+            <button>
+              <img :src="item['icon']" :alt="item['title']" />
+              <span>{{ item["title"] }}</span>
+            </button>
           </li>
         </ul>
         <br />
@@ -1062,9 +1064,7 @@ export default {
             message: "Cadinality Input canceled, the relation was be removed",
           });
         })
-        .catch(() => {
-          
-        });
+        .catch(() => {});
     },
   },
   mounted() {
