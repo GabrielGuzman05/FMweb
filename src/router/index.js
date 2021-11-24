@@ -110,7 +110,7 @@ export const demoRouter = [
     name: 'fmWeb',
     meta: {
       title: 'FMWeb',
-      icon: require('@/assets/icon/group.png')
+      icon: require('@/assets/icon/fmweb.png')
     },
     component: () => import('@/views/example/fmWeb')
   }
