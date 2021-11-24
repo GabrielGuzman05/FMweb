@@ -7,7 +7,7 @@
     >
       <a data-v-c28012ce="" href="#" class="sidebarLogo">
         <img :src="logo" class="sidebarLogoImg" :class="{sidebarLogoImgCollapse:isCollapse}" alt="logo">
-        <h1 class="sidebarTitle" v-if="!isCollapse">Vue + MxGraph</h1>
+        <h1 class="sidebarTitle" v-if="!isCollapse">FMweb</h1>
       </a>
       <template v-for="router in demoRouter">
         <el-menu-item :key="router['name']" :index="router['name']">
