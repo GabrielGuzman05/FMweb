@@ -63,10 +63,10 @@
       <div class="toolbarContainer" id="toolbarContainer">
         <ul>
           <li v-for="item in toolbarItems" :key="item['title']" ref="toolItem">
-            <button>
+            <el-button type="primary" plain>
               <img :src="item['icon']" :alt="item['title']" />
               <span>{{ item["title"] }}</span>
-            </button>
+            </el-button>
           </li>
         </ul>
         <br />
@@ -78,10 +78,10 @@
             :key="item['title']"
             ref="relItem"
           >
-            <button v-on:click="relationType = item['title']">
+            <el-button plain type="success" style="width: 100%" v-on:click="relationType = item['title']">
               <img :src="item['icon']" :alt="item['title']" />
-              <span>{{ item["title"] }}</span>
-            </button>
+              <span style="center">{{ item["title"] }}</span>
+            </el-button>
           </li>
         </ul>
         <br />
@@ -154,6 +154,7 @@ import {
   mxUtils as MxUtils,
   mxGraphModel as mxGraphModel,
   mxRectangle as MxRectangle,
+  mxKeyHandler as MxKeyHandler,
 } from "mxgraph/javascript/mxClient";
 //import a modal from the components
 import Modal from "./../../../components/Modal.vue";
@@ -282,39 +283,59 @@ export default {
       this.graph.convertValueToString = (cell) => {
         return this.R.prop("name", cell);
       };
+
+      var keyHandler = new MxKeyHandler(this.graph);
+      //on del key press delete selected cells
+      keyHandler.bindKey(46, function (evt) {
+        evt;
+        if (that.graph.isEnabled()) {
+          that.graph.removeCells();
+        }
+      });
+
+      keyHandler.bindKey(8, function (evt) {
+        evt;
+        if (that.graph.isEnabled()) {
+          that.graph.removeCells();
+        }
+      });
+
       this.graph.addListener(MxEvent.DOUBLE_CLICK, (graph, evt) => {
         const cell = this.R.pathOr([], ["properties", "cell"], evt);
         console.info(cell);
-        this.$prompt("Please input a new name for the Feature", "Tip", {
-          confirmButtonText: "OK",
-          cancelButtonText: "Cancel",
-          //inputPattern:  /[\w!#$%&'*+/=?^_`{|}~-]+(?:\.[\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\w](?:[\w-]*[\w])?\.)+[\w](?:[\w-]*[\w])?/,
-          inputErrorMessage: "Invalid Name",
-        })
-          .then(({ value }) => {
-            let cell = this.graph.getSelectionCell();
-            this.graph.getModel().beginUpdate();
-            try {
-              console.log(value);
-              cell.setAttribute("name", value);
-              var preferred = this.graph.getPreferredSizeForCell(cell);
-              this.graph.updateCellSize(cell, true);
-              var current = cell.getGeometry();
-              var width = 150;
-              var height = 50;
-              current.width = preferred.width > width ? preferred.width : width;
-              current.height =
-                preferred.height > height ? preferred.height : height;
-            } finally {
-              this.graph.getModel().endUpdate();
-            }
+        if (cell.vertex) {
+          this.$prompt("Please input a new name for the Feature", "Tip", {
+            confirmButtonText: "OK",
+            cancelButtonText: "Cancel",
+            //inputPattern:  /[\w!#$%&'*+/=?^_`{|}~-]+(?:\.[\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\w](?:[\w-]*[\w])?\.)+[\w](?:[\w-]*[\w])?/,
+            inputErrorMessage: "Invalid Name",
           })
-          .catch(() => {
-            this.$message({
-              type: "info",
-              message: "Input canceled",
+            .then(({ value }) => {
+              let cell = this.graph.getSelectionCell();
+              this.graph.getModel().beginUpdate();
+              try {
+                console.log(value);
+                cell.setAttribute("name", value);
+                var preferred = this.graph.getPreferredSizeForCell(cell);
+                this.graph.updateCellSize(cell, true);
+                var current = cell.getGeometry();
+                var width = 150;
+                var height = 50;
+                current.width =
+                  preferred.width > width ? preferred.width : width;
+                current.height =
+                  preferred.height > height ? preferred.height : height;
+              } finally {
+                this.graph.getModel().endUpdate();
+              }
+            })
+            .catch(() => {
+              this.$message({
+                type: "info",
+                message: "Input canceled",
+              });
             });
-          });
+        }
       });
 
       var iconTolerance = 20;
@@ -330,6 +351,7 @@ export default {
           }
         },
         mouseMove: function (sender, me) {
+          sender;
           if (
             this.currentState != null &&
             (me.getState() == this.currentState || me.getState() == null)
@@ -369,13 +391,18 @@ export default {
             }
           }
         },
-        mouseUp: function (sender, me) {},
+        mouseUp: function (sender, me) {
+          sender;
+          me;
+        },
         dragEnter: function (evt, state) {
           if (this.currentIconSet == null) {
             this.currentIconSet = new mxIconSet(state);
           }
         },
         dragLeave: function (evt, state) {
+          evt;
+          state;
           if (this.currentIconSet != null) {
             this.currentIconSet.destroy();
             this.currentIconSet = null;
@@ -628,7 +655,8 @@ export default {
           elt = elt.nextSibling;
         }
         //Add all the relationships that weren't added previously
-        cells.array.forEach((cell) => {
+        console.log(cells);
+        cells.forEach((cell) => {
           this.addRelation(cell);
         });
       };
@@ -997,6 +1025,7 @@ export default {
       }
     },
     carInputOpen() {
+      //TODO limit cardinality in case of mandatory and optional
       this.dialogFormVisible = true;
     },
     carInputSave() {
