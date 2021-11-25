@@ -21,6 +21,7 @@
             type="file"
             round
             id="import-file-model"
+            accept=".xml"
             v-on:change="importModel"
           />
         </template>
@@ -78,7 +79,12 @@
             :key="item['title']"
             ref="relItem"
           >
-            <el-button plain type="success" style="width: 100%" v-on:click="relationType = item['title']">
+            <el-button
+              plain
+              type="success"
+              style="width: 100%"
+              v-on:click="relationType = item['title']"
+            >
               <img :src="item['icon']" :alt="item['title']" />
               <span style="center">{{ item["title"] }}</span>
             </el-button>
@@ -304,6 +310,7 @@ export default {
         const cell = this.R.pathOr([], ["properties", "cell"], evt);
         console.info(cell);
         if (cell.vertex) {
+          //console.log(mxGraphModel.prototype.getOutgoingEdges(cell));
           this.$prompt("Please input a new name for the Feature", "Tip", {
             confirmButtonText: "OK",
             cancelButtonText: "Cancel",
@@ -821,14 +828,40 @@ export default {
       //Gets all descendants of a given cell
       let self = this;
       let outgoing = mxGraphModel.prototype.getOutgoingEdges(cell);
-      let descendants = self.getTargets(outgoing);
-      if (descendants.length > 0) {
-        descendantsArray = self.fuseArrays(descendantsArray, descendants);
-        for (let i = 0; i < descendants.length; i++) {
-          self.getDescendants(descendants[i], descendantsArray);
+      for (let index = 0; index < outgoing.length; index++) {
+        const element = outgoing[index];
+        console.log(element.value.getAttribute("type", ""));
+        if (
+          element.value.getAttribute("type", "").localeCompare("Optional") == 0
+        ) {
+        } else if (
+          element.value.getAttribute("type", "").localeCompare("Mandatory") == 0
+        ) {
+        } else {
+          console.log("delete element");
+          outgoing.splice(index, 1);
         }
       }
-      return descendantsArray;
+      let descendants = self.getTargets(outgoing);
+      //TODO fix element amounts in descendants by deleting if it exists in descendantsArray
+
+      for (let index = 0; index < descendants.length; index++) {
+        const element = descendants[index];
+        if (self.findInArray(descendantsArray, element)) {
+          descendants.splice(index, 1);
+        }
+      }
+
+      let aux = new Array();
+      console.log(descendantsArray);
+      if (descendants.length > 0) {
+        console.log("entra");
+        descendantsArray = self.fuseArrays(descendantsArray, descendants);
+        for (let i = 0; i < descendants.length; i++) {
+          aux = self.getDescendants(descendants[i], descendantsArray);
+        }
+      }
+      return self.fuseArrays(aux, descendantsArray);
     },
     /**
      * Gets all the ancestors of a given cell
@@ -838,18 +871,45 @@ export default {
       //Gets all ancestors of a given cell
       let self = this;
       let incoming = mxGraphModel.prototype.getIncomingEdges(cell);
+      for (let index = 0; index < incoming.length; index++) {
+        const element = incoming[index];
+        console.log(element.value.getAttribute("type", ""));
+        if (
+          element.value.getAttribute("type", "").localeCompare("Optional") == 0
+        ) {
+        } else if (
+          element.value.getAttribute("type", "").localeCompare("Mandatory") == 0
+        ) {
+        } else {
+          console.log("delete element");
+          incoming.splice(index, 1);
+        }
+      }
+
       let ancestors = self.getSources(incoming);
+      console.log(ancestors.length);
+      for (let index = 0; index < ancestors.length; index++) {
+        const element = ancestors[index];
+        console.log(self.findInArray(ancestorsArray, element));
+        if (self.findInArray(ancestorsArray, element)) {
+          ancestors.splice(index, 1);
+        }
+      }
+      console.log(ancestors.length);
+      var aux = new Array();
+
       if (ancestors.length > 0) {
         ancestorsArray = self.fuseArrays(ancestorsArray, ancestors);
         for (let i = 0; i < ancestors.length; i++) {
-          self.getAncestors(ancestors[i], ancestorsArray);
+          aux = self.getAncestors(ancestors[i], ancestorsArray);
         }
       }
-      return ancestorsArray;
+      console.log(aux);
+      return self.fuseArrays(ancestorsArray, aux);
     },
     /**
      * Gets all the relationships that are of the same type
-     * Retunrs an array with all the cells that represent the given type of relationship
+     * Returns an array with all the cells that represent the given type of relationship
      */
     getRelationships(relationshipType) {
       //Gets all relationships of the given type
@@ -857,7 +917,7 @@ export default {
       let edges = new Array();
       for (let i = 0; i < allCells.length; i++) {
         if (!allCells[i].isVertex()) {
-          if (allCells[i].value.attributes.type.nodeValue == relationshipType) {
+          if (allCells[i].value.getAttribute("type", "") == relationshipType) {
             edges.push(allCells[i]);
           }
         }
@@ -1010,18 +1070,83 @@ export default {
           );
         }
 
-        // //CST08
-        // if(relationType == "Excludes"){
-        //     let descendantsArray = new Array();
-        //     descendantsArray = that.getDescendants(source, descendantsArray);
-        //     console.log(descendantsArray);
-        //     if(!that.findInArray(descendantsArray, target)){
-        //         MxUtils.alert("CST08 se cumple");
-        //     }
-        //     else{
-        //         MxUtils.alert("CST08 NO se cumple");
-        //     }
-        // }
+        //CST08
+        if (that.relationType == "Excludes") {
+          let descendantsArray = new Array();
+          descendantsArray = that.getDescendants(target, descendantsArray);
+          console.log(descendantsArray);
+
+          if (that.findInArray(descendantsArray, source)) {
+            MxUtils.alert("CST08 NO se cumple");
+            that.graph.removeCells([edge]);
+          }
+        }
+
+        //CST09 y CST10
+        if (that.relationType == "Requires") {
+          //CST09
+          var allExcludes = that.getRelationships("Excludes");
+          for (let index = 0; index < allExcludes.length; index++) {
+            const element = allExcludes[index];
+            if (!(element.target == target)) {
+              allExcludes.splice(index, 1);
+            }
+          }
+          console.log("get Ancestors Array");
+          let ancestorsArray = new Array();
+          ancestorsArray = that.getAncestors(source,ancestorsArray);
+
+          console.log(ancestorsArray);
+          if (allExcludes.length > 0) {
+            for (let i = 0; i < allExcludes.length; i++) {
+              const exclude = allExcludes[i];
+              for (let j = 0; j < ancestorsArray.length; j++) {
+                const ancestor = ancestorsArray[j];
+                if (exclude.source == ancestor) {
+                  MxUtils.alert("CST09 NO se cumple");
+                  that.graph.removeCells([edge]);
+                }
+              }
+            }
+          }
+          
+          //CST10
+          var allAlternative = that.getRelationships("Alternative");
+          var descendants = new Array();
+          if (allAlternative.length > 0) {
+            for (let i = 0; i < allAlternative.length; i++) {
+              const auxAlt = allAlternative[i];
+              for (let j = 0; j < ancestorsArray.length; j++) {
+                const ancestor = ancestorsArray[j];
+                if (ancestor == auxAlt.source) {
+                  if ((auxAlt.target = target)) {
+                    MxUtils.alert("CST10 NO se cumple");
+                    that.graph.removeCells([edge]);
+                  }else{
+                    descendants = self.getDescendants(auxAlt.target);
+                    if (self.findInArray(descendants, target)) {
+                      MxUtils.alert("CST10 NO se cumple");
+                      that.graph.removeCells([edge]);
+                    }
+                  }
+                } else if (ancestor == auxAlt.target) {
+                  if (auxAlt.source == target) {
+                    MxUtils.alert("CST19 NO se cumple");
+                    that.graph.removeCells([edge]);
+                  } else {
+                    descendants = self.getDescendants(auxAlt.source);
+                    if (self.findInArray(descendants, target)) {
+                      MxUtils.alert("CST10 NO se cumple");
+                      that.graph.removeCells([edge]);
+                    }
+                  }
+                }
+              }
+            }
+          }
+          //end cst10
+          
+        }
       }
     },
     carInputOpen() {
@@ -1077,6 +1202,18 @@ export default {
             this.relationType +
             ". Minimum Cardinality < 0 or Minimum Cardinality > Maximum Cardinality"
         );
+      }
+
+      //CST02
+      let descendantsArray = new Array();
+      descendantsArray = this.getDescendants(edge.target, descendantsArray);
+      //console.log(descendantsArray);
+
+      if (this.findInArray(descendantsArray, edge.source)) {
+        MxUtils.alert(
+          "CST02. A Feature cant be its own descendant. Dont be Fry from Futurama"
+        );
+        this.graph.removeCells([edge]);
       }
     },
     /**
