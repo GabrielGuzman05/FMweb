@@ -9,7 +9,16 @@ import {
 //Imports the icons from the assets icon folder
 
 const featureIcon = './icon/feature.png'
-const relationIcon = './icon/link.png'
+
+//const relationIcon = './icon/link.png'
+const optionalIcon = './icon/Optional.png'
+const mandatoryIcon = './icon/Mandatory.png'
+const alternativeIcon = './icon/Alternative.png'
+const orIcon = './icon/Or.png'
+const requiresIcon = './icon/Requires.png'
+const excludesIcon = './icon/Excludes.svg'
+
+
 
 /**
  * Array of toolbar elemnts, follow the structure:
@@ -72,7 +81,7 @@ export const relationshipTypes = [
   {
     title: 'Optional',
     relationship: 'Parenthood',
-    icon: relationIcon,
+    icon: optionalIcon,
     style: {
       startArrow: 0,
       endArrow: 'oval',
@@ -82,7 +91,7 @@ export const relationshipTypes = [
   {
     title: 'Mandatory',
     relationship: 'Parenthood',
-    icon: relationIcon,
+    icon: mandatoryIcon,
     style: {
       startArrow: 0,
       endArrow: 'oval',
@@ -92,7 +101,7 @@ export const relationshipTypes = [
   {
     title: 'Alternative',
     relationship: 'LogicAssociation',
-    icon: relationIcon,
+    icon: alternativeIcon,
     style: {
       startArrow: 'block', endArrow: 'block', startFill: 0, endFill: 0
     }
@@ -100,7 +109,7 @@ export const relationshipTypes = [
   {
     title: 'Or',
     relationship: 'LogicAssociation',
-    icon: relationIcon,
+    icon: orIcon,
     style: {
       startArrow: 'block', endArrow: 'block', startFill: 1, endFill: 1
     }
@@ -108,7 +117,7 @@ export const relationshipTypes = [
   {
     title: 'Requires',
     relationship: 'Dependency',
-    icon: relationIcon,
+    icon: requiresIcon,
     style: {
       dashed: 1, startArrow: 0, endArrow: 'block', endFill: 1
     }
@@ -116,7 +125,7 @@ export const relationshipTypes = [
   {
     title: 'Excludes',
     relationship: 'Dependency',
-    icon: relationIcon,
+    icon: excludesIcon,
     style: {
       dashed: 1, startArrow: 'block', endArrow: 'block', startFill: 1, endFill: 1
     }

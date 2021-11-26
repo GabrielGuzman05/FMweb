@@ -86,7 +86,7 @@
               v-on:click="relationType = item['title']"
             >
               <img :src="item['icon']" :alt="item['title']" />
-              <span style="center">{{ item["title"] }}</span>
+              {{ item["title"] }}
             </el-button>
           </li>
         </ul>
@@ -1094,7 +1094,7 @@ export default {
           }
           console.log("get Ancestors Array");
           let ancestorsArray = new Array();
-          ancestorsArray = that.getAncestors(source,ancestorsArray);
+          ancestorsArray = that.getAncestors(source, ancestorsArray);
 
           console.log(ancestorsArray);
           if (allExcludes.length > 0) {
@@ -1109,7 +1109,7 @@ export default {
               }
             }
           }
-          
+
           //CST10
           var allAlternative = that.getRelationships("Alternative");
           var descendants = new Array();
@@ -1122,7 +1122,7 @@ export default {
                   if ((auxAlt.target = target)) {
                     MxUtils.alert("CST10 NO se cumple");
                     that.graph.removeCells([edge]);
-                  }else{
+                  } else {
                     descendants = self.getDescendants(auxAlt.target);
                     if (self.findInArray(descendants, target)) {
                       MxUtils.alert("CST10 NO se cumple");
@@ -1145,7 +1145,6 @@ export default {
             }
           }
           //end cst10
-          
         }
       }
     },
@@ -1281,12 +1280,17 @@ export default {
           cursor: pointer;
 
           img {
-            width: 15px;
-            height: 15px;
+            width: 30px;
+            height: 30px;
           }
 
           span {
-            margin-left: 15px;
+            display: flex;
+            align-items: center;
+            text-align: center;
+            justify-content: center;
+            border: none;
+            
           }
         }
       }
