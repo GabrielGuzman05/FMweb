@@ -29,7 +29,6 @@
         <template v-slot:footer>
           <div>
             <button @click="$refs.modalImport.closeModal()">Cancel</button>
-            <button @click="$refs.modalImport.closeModal()">Save</button>
           </div>
         </template>
       </modal>
@@ -169,6 +168,16 @@ import { relationshipTypes, toolbarItems } from "./toolbar";
 
 import mxIconSet from "./toolbar";
 
+import {
+  FeatureModel,
+  Feature,
+  Parenthood,
+  LogicAssociation,
+  LogicAssociationType,
+  Dependency,
+  DependencyType,
+} from "./Modelo";
+
 export default {
   name: "index2",
   components: {
@@ -193,6 +202,9 @@ export default {
       inputMaxCar: 0,
       dialogFormVisible: false,
       labelWidth: "120 px",
+      featureModel: null,
+      arrayFeatures: null,
+      arrayRelationships: null,
     };
   },
   methods: {
@@ -229,6 +241,11 @@ export default {
         new MxConnectionConstraint(new MxPoint(0.5, 1), true),
         new MxConnectionConstraint(new MxPoint(0.75, 1), true),
       ];
+
+      this.featureModel = new FeatureModel(null);
+      this.arrayFeatures = [];
+      this.arrayRelationships = [];
+
       MxConnectionHandler.prototype.connectImage = new MxImage(
         require("../../../assets/connector.gif"),
         16,
@@ -285,6 +302,8 @@ export default {
       this.graph.setAllowDanglingEdges(false);
       this.graph.setCellsEditable(false);
       this.graph.setMultigraph(false);
+      this.graph.setAllowLoops(false);
+
       //this.graph.enterStopsCellEditing=true;
       this.graph.convertValueToString = (cell) => {
         return this.R.prop("name", cell);
@@ -454,9 +473,15 @@ export default {
         );
 
         vertex.title = toolItem["title"];
+        //TODO add feature to meta model
       } finally {
         this.graph.getModel().endUpdate();
       }
+      let auxFeature = new Feature("New Feature", "", null, null);
+      if (this.arrayFeatures.length == 0) {
+        this.featureModel.root = auxFeature;
+      }
+      this.arrayFeatures.push(auxFeature);
       this.graph.setSelectionCell(vertex);
     },
     /**
@@ -497,55 +522,6 @@ export default {
           true
         );
       });
-    },
-    /**
-     * Not used but planned in the beginig, is possible to delete at this moment
-     */
-    initRelationType() {
-      const domArray = this.$refs.relItem;
-
-      if (!(domArray instanceof Array) || domArray.length <= 0) {
-        return;
-      }
-      /*
-      domArray.forEach((dom, domIndex) => {
-        const relItem = this.relationshipTypes[domIndex];
-      });
-      */
-    },
-    /**
-     * Creates a text field for future modifiying, possible not in use
-     * in case we add the modifiable true propertie of the graph
-     */
-    createTextField(graph, form, cell, attribute) {
-      let input = form.addText(attribute.nodeName + ":", attribute.nodeValue);
-
-      let applyHandler = function () {
-        let newValue = input.value || "";
-        let oldValue = cell.getAttribute(attribute.nodeName, "");
-
-        if (newValue != oldValue) {
-          graph.getModel().beginUpdate();
-          try {
-            cell.setAttribute(attribute.nodeName, newValue);
-            graph.updateCellSize(cell);
-          } finally {
-            graph.getModel().endUpdate();
-          }
-        }
-      };
-
-      this.mxEvent.addListener(input, "keypress", function (evt) {
-        if (evt.keyCode == /*enter*/ 13 && !this.mxEvent.isShiftDown(evt)) {
-          input.blur();
-        }
-      });
-
-      if (this.mxClient.IS_IE) {
-        this.mxEvent.addListener(input, "focusout", applyHandler);
-      } else {
-        this.mxEvent.addListener(input, "blur", applyHandler);
-      }
     },
     /**
      * Shows the current XML data of the full graph in the console
@@ -633,7 +609,17 @@ export default {
       if (!files.length) {
         return;
       }
-      var file = files[0];
+      this.$confirm(
+        "This will permanently delete the current model and replace it. Continue?",
+        "Warning",
+        {
+          confirmButtonText: "OK",
+          cancelButtonText: "Cancel",
+          type: "warning",
+        }
+      )
+        .then(() => {
+          var file = files[0];
       var reader = new FileReader();
       var vm = this;
       reader.onload = (e) => {
@@ -668,6 +654,18 @@ export default {
         });
       };
       reader.readAsText(file);
+          this.$message({
+            type: "success",
+            message: "Import completed",
+          });
+        })
+        .catch(() => {
+          this.$message({
+            type: "info",
+            message: "Import canceled",
+          });
+        });
+      
     },
     /**
      * Saves the graph model as an image
@@ -843,7 +841,7 @@ export default {
         }
       }
       let descendants = self.getTargets(outgoing);
-      //TODO fix element amounts in descendants by deleting if it exists in descendantsArray
+      //fix element amounts in descendants by deleting if it exists in descendantsArray
 
       for (let index = 0; index < descendants.length; index++) {
         const element = descendants[index];
@@ -852,16 +850,17 @@ export default {
         }
       }
 
-      let aux = new Array();
       console.log(descendantsArray);
       if (descendants.length > 0) {
-        console.log("entra");
         descendantsArray = self.fuseArrays(descendantsArray, descendants);
         for (let i = 0; i < descendants.length; i++) {
-          aux = self.getDescendants(descendants[i], descendantsArray);
+          descendantsArray = self.getDescendants(
+            descendants[i],
+            descendantsArray
+          );
         }
       }
-      return self.fuseArrays(aux, descendantsArray);
+      return descendantsArray;
     },
     /**
      * Gets all the ancestors of a given cell
@@ -896,16 +895,15 @@ export default {
         }
       }
       console.log(ancestors.length);
-      var aux = new Array();
 
       if (ancestors.length > 0) {
         ancestorsArray = self.fuseArrays(ancestorsArray, ancestors);
         for (let i = 0; i < ancestors.length; i++) {
-          aux = self.getAncestors(ancestors[i], ancestorsArray);
+          ancestorsArray = self.getAncestors(ancestors[i], ancestorsArray);
         }
       }
-      console.log(aux);
-      return self.fuseArrays(ancestorsArray, aux);
+
+      return ancestorsArray;
     },
     /**
      * Gets all the relationships that are of the same type
@@ -1077,7 +1075,9 @@ export default {
           console.log(descendantsArray);
 
           if (that.findInArray(descendantsArray, source)) {
-            MxUtils.alert("CST08 NO se cumple");
+            MxUtils.alert(
+              "CST08. A feature can't be excluded by a descendant."
+            );
             that.graph.removeCells([edge]);
           }
         }
@@ -1103,7 +1103,9 @@ export default {
               for (let j = 0; j < ancestorsArray.length; j++) {
                 const ancestor = ancestorsArray[j];
                 if (exclude.source == ancestor) {
-                  MxUtils.alert("CST09 NO se cumple");
+                  MxUtils.alert(
+                    "CST09. Can't requiere this feature as it's been excluded by an ancestor."
+                  );
                   that.graph.removeCells([edge]);
                 }
               }
@@ -1120,23 +1122,31 @@ export default {
                 const ancestor = ancestorsArray[j];
                 if (ancestor == auxAlt.source) {
                   if ((auxAlt.target = target)) {
-                    MxUtils.alert("CST10 NO se cumple");
+                    MxUtils.alert(
+                      "CST10. Can't requiere this feature as it's been excluded by an ancestor in a alternative relationship."
+                    );
                     that.graph.removeCells([edge]);
                   } else {
                     descendants = self.getDescendants(auxAlt.target);
                     if (self.findInArray(descendants, target)) {
-                      MxUtils.alert("CST10 NO se cumple");
+                      MxUtils.alert(
+                        "CST10. Can't requiere this feature as it's been excluded by an ancestor in a alternative relationship."
+                      );
                       that.graph.removeCells([edge]);
                     }
                   }
                 } else if (ancestor == auxAlt.target) {
                   if (auxAlt.source == target) {
-                    MxUtils.alert("CST19 NO se cumple");
+                    MxUtils.alert(
+                      "CST10. Can't requiere this feature as it's been excluded by an ancestor in a alternative relationship."
+                    );
                     that.graph.removeCells([edge]);
                   } else {
                     descendants = self.getDescendants(auxAlt.source);
                     if (self.findInArray(descendants, target)) {
-                      MxUtils.alert("CST10 NO se cumple");
+                      MxUtils.alert(
+                        "CST10. Can't requiere this feature as it's been excluded by an ancestor in a alternative relationship."
+                      );
                       that.graph.removeCells([edge]);
                     }
                   }
@@ -1203,15 +1213,12 @@ export default {
         );
       }
 
-      //CST02
+      //CST03
       let descendantsArray = new Array();
       descendantsArray = this.getDescendants(edge.target, descendantsArray);
-      //console.log(descendantsArray);
 
       if (this.findInArray(descendantsArray, edge.source)) {
-        MxUtils.alert(
-          "CST02. A Feature cant be its own descendant. Dont be Fry from Futurama"
-        );
+        MxUtils.alert("CST03. A Feature can't be the parent of an ancestor.");
         this.graph.removeCells([edge]);
       }
     },
@@ -1236,7 +1243,7 @@ export default {
     this.createGraph();
     this.initGraph();
     this.initToolbar();
-    this.initRelationType();
+
     this.$refs.container.style.background = 'url("./mxgraph/images/grid.gif")';
   },
 };
@@ -1290,7 +1297,6 @@ export default {
             text-align: center;
             justify-content: center;
             border: none;
-            
           }
         }
       }
