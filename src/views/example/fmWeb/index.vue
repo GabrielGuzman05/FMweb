@@ -1,16 +1,20 @@
 <template>
   <div class="customToolbarContainer">
     <div class="options row">
-      <button v-on:click="exportGraphXML()">Export</button>
-      <button type="button" v-on:click="saveFile()">Save as File</button>
-      <button
-        type="button"
-        id="show-modal"
-        v-on:click="$refs.modalImport.openModal()"
-      >
-        Import Model
-      </button>
-      <button type="button" v-on:click="saveImage()">Save as Image</button>
+      <el-header style="font-size: 12px; height: 22px; padding: 3px">
+        <el-dropdown @command="handleCommand" trigger="click">
+          <span class="el-dropdown-link">
+            <i class="el-icon-setting"></i>File
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item command="a">Export</el-dropdown-item>
+            <el-dropdown-item command="b">Save as File </el-dropdown-item>
+            <el-dropdown-item command="c">Save as Image </el-dropdown-item>
+            <el-dropdown-item command="d">Import Model</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </el-header>
+
       <modal ref="modalImport">
         <template v-slot:header>
           <h1>Select a Model File and Upload it</h1>
@@ -620,40 +624,40 @@ export default {
       )
         .then(() => {
           var file = files[0];
-      var reader = new FileReader();
-      var vm = this;
-      reader.onload = (e) => {
-        var xml = e.target.result;
+          var reader = new FileReader();
+          var vm = this;
+          reader.onload = (e) => {
+            var xml = e.target.result;
 
-        var doc = MxUtils.parseXml(xml.substring(14, xml.length - 15));
-        vm.graph.model.clear();
-        let codec = new MxCodec(doc);
-        codec.decode(doc.documentElement, vm.graph.getModel());
-        let elt = doc.documentElement.firstChild;
-        let cells = [];
-        while (elt != null) {
-          let cell = codec.decode(elt);
-          if (
-            cell != undefined &&
-            (cell.nodeName == "feature" || cell.nodeName == "relationship")
-          ) {
-            //Just add to the graph if it is a feature in case of realtionships, push them to an array
-            //so you can add them later
-            if (cell.nodeName == "feature") {
-              this.addFeature(cell);
-            } else {
-              cells.push(cell);
+            var doc = MxUtils.parseXml(xml.substring(14, xml.length - 15));
+            vm.graph.model.clear();
+            let codec = new MxCodec(doc);
+            codec.decode(doc.documentElement, vm.graph.getModel());
+            let elt = doc.documentElement.firstChild;
+            let cells = [];
+            while (elt != null) {
+              let cell = codec.decode(elt);
+              if (
+                cell != undefined &&
+                (cell.nodeName == "feature" || cell.nodeName == "relationship")
+              ) {
+                //Just add to the graph if it is a feature in case of realtionships, push them to an array
+                //so you can add them later
+                if (cell.nodeName == "feature") {
+                  this.addFeature(cell);
+                } else {
+                  cells.push(cell);
+                }
+              }
+              elt = elt.nextSibling;
             }
-          }
-          elt = elt.nextSibling;
-        }
-        //Add all the relationships that weren't added previously
-        console.log(cells);
-        cells.forEach((cell) => {
-          this.addRelation(cell);
-        });
-      };
-      reader.readAsText(file);
+            //Add all the relationships that weren't added previously
+            console.log(cells);
+            cells.forEach((cell) => {
+              this.addRelation(cell);
+            });
+          };
+          reader.readAsText(file);
           this.$message({
             type: "success",
             message: "Import completed",
@@ -665,7 +669,6 @@ export default {
             message: "Import canceled",
           });
         });
-      
     },
     /**
      * Saves the graph model as an image
@@ -1238,6 +1241,28 @@ export default {
         })
         .catch(() => {});
     },
+    /**
+     * Handles the command for the dropdown menu
+     */
+    handleCommand(command) {
+      switch (command) {
+        case "a":
+          this.exportGraphXML();
+          break;
+        case "b":
+          this.saveFile();
+          break;
+        case "c":
+          this.saveImage();
+          break;
+        case "d":
+          this.$refs.modalImport.openModal();
+          break;
+
+        default:
+          break;
+      }
+    },
   },
   mounted() {
     this.createGraph();
@@ -1321,6 +1346,16 @@ export default {
     flex-direction: row;
     flex-wrap: wrap;
     width: 100%;
+  }
+  .el-header {
+    background-color: #b3c0d1;
+    color: #333;
+    height: 21px;
+    width: 100%;
+  }
+  .el-dropdown-link {
+    cursor: pointer;
+    //color: #409EFF;
   }
 }
 </style>
